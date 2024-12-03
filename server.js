@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
+const cors = require('cors');
 const mongoose = require('mongoose');
 dotenv.config({path:'config.env'});
 const adminRoute = require('./Routes/adminRoute');
@@ -13,6 +14,9 @@ console.log(`DB Connected: ${conn.connection.host}`)
 });
 
 const app = express();
+
+app.use(cors());
+app.options('*', cors());
 
 app.use(express.json());
 
