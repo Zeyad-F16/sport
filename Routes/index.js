@@ -4,8 +4,8 @@ const TeamMemberRoute = require('../Routes/TeamMemberRoute');
 
 const MountRoutes = (app)=>{
 app.use('/assiutmotorsport/api/admin', AdminRoute);
-app.use('/assiutmotorsport/api/admin', GellaryRoute);
-app.use('/assiutmotorsport/api/admin', TeamMemberRoute);
+app.use('/assiutmotorsport/api/gellary', GellaryRoute);
+app.use('/assiutmotorsport/api/teammember', TeamMemberRoute);
 };
 
 module.exports = MountRoutes;

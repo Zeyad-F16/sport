@@ -38,8 +38,6 @@ app.use(compression());
 
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, 'uploads')));
-
 if(process.env.NODE_ENV === 'development'){
   app.use(morgan('dev'));
   console.log(`${process.env.NODE_ENV} mode`);

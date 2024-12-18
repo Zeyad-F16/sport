@@ -1,28 +1,47 @@
-const asyncHandler = require('express-async-handler');
-const { v4: uuidv4 } = require('uuid');
-const sharp = require('sharp'); 
 const factory = require('./handlerFactory');
-const {uploadSingleImage} =require('../Middlewares/uploadImageMiddleware');
 const TeamMemberDB = require('../Models/TeamMemberModel');
+const upload = require('../config/multer');
+const asyncHandler = require('express-async-handler');
+const cloudinary = require('cloudinary').v2;
+const extractPublicId = require('../utils/getImageId');
+
+exports.getAllTeamMembers  = factory.getAll(TeamMemberDB);
+
+exports.getOneTeamMember  = factory.getOne(TeamMemberDB);
 
 exports.createTeamMember  = factory.createOne(TeamMemberDB);
 
-exports.updateTeamMember = factory.updateOne(TeamMemberDB);
+exports.updateNonImages  = factory.updateNonImages(TeamMemberDB);
 
-exports.deleteTeamMember = factory.deleteOne(TeamMemberDB);
+exports.updateSingleImage  = factory.updateSingleImage(TeamMemberDB , "profileImage");
 
-exports.uploadTeamMemberImage = uploadSingleImage('profileImage');
+// delete team member
+exports.deleteTeamMember = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  
+  const document = await TeamMemberDB.findById(id);
+  
+  if (!document) {
+    return next(new ApiError(`No document found for this id ${id}`, 404));
+  }
+  
+  // Extract Cloudinary public_id from the image URL
+  if (document.profileImage) {
+    const publicId = extractPublicId(document.profileImage);
+    await cloudinary.uploader.destroy(publicId);
+  }
+  
+  await document.deleteOne();
+  res.status(204).send();
+});
 
-exports.resizeImage = asyncHandler(async (req ,res , next)=>{
-    const fileName = `TeamMember-${uuidv4()}-${Date.now()}.jpeg`;
-    if(req.file){
-    await sharp(req.file.buffer)
-    .resize(600,600)
-    .toFormat('jpeg')
-    .jpeg({quality:90})
-    .toFile(`uploads/TeamMember/${fileName}`);
-    
-    req.body.profileImage = fileName;
-}
-     next();
- });
+// Middleware for uploading profile image
+exports.uploadMiddleware = upload.single('profileImage');
+
+exports.handleSingleFileUpload = (req, res , next) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  req.body.profileImage = req.file.path;
+  next();
+};

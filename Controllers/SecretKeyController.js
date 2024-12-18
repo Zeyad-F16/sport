@@ -11,7 +11,7 @@ const ValidateSecret = (req , res , next)=>{
      // Generate a temporary token
     const tempToken = jwt.sign({allowSignup: true},process.env.JWT_SECRET,{expiresIn : '10m'});
     
-    res.status(200).json({status: 'success', data: tempToken});
+    res.status(200).json({status: 'success', token: tempToken});
 };
 
 module.exports = ValidateSecret;

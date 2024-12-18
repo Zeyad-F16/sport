@@ -2,33 +2,28 @@ const { check } = require('express-validator');
 const validatorMiddleWare = require('../../Middlewares/ValidatorMiddleware');
 
 exports.createGellaryValidator = [
-    check('year')
-    .notEmpty()
-    .withMessage('Year is required')
-    .isNumeric()
-    .withMessage('Year must be a number')
-    .isLength({ max: 4 })
-    .withMessage('To long price'),
-    check('coverImage').notEmpty().withMessage('Gellary Cover image is required'),
-    check('images')
-      .notEmpty()
-      .withMessage('images is required')
-      .isArray()
-      .withMessage('images should be array of string')
-      .isLength({min : 1})
-      .isLength({max : 100}),
-    validatorMiddleWare,
+  check('title').notEmpty().withMessage('Title is required'),
+  check('coverImage').custom((value, { req }) => {
+    if (!req.files || !req.files.coverImage) {
+      throw new Error('Cover image is required');
+    }
+    return true;
+  }),
+  check('images').custom((value, { req }) => {
+    if (!req.files || !req.files.images || req.files.images.length === 0) {
+      throw new Error('At least one gallery image is required');
+    }
+    return true;
+  }),
 ];
 
 
 exports.updateGellaryValidator = [
   check('id').isMongoId().withMessage('Invalid ID formate'),
-  check('year')
-    .optional()
-    .isNumeric()
-    .withMessage('Year must be a number')
-    .isLength({ max: 4 })
-    .withMessage('Year must not exceed 4 digits'),
+  check('title')
+  .optional()
+  .notEmpty()
+  .withMessage('Title cannot be empty if provided'),
   check('coverImage')
     .optional()
     .notEmpty()
@@ -44,6 +39,11 @@ exports.updateGellaryValidator = [
       return true;
     }),
 
+  validatorMiddleWare,
+];
+
+exports.getGellaryValidator = [
+  check('id').isMongoId().withMessage('Invalid ID formate'),
   validatorMiddleWare,
 ];
 

@@ -1,7 +1,7 @@
 const mongoose  = require('mongoose');
 
 const GellarySchema = mongoose.Schema({
-  year : {type:  Number , required : true },
+  title : {type:  String , required : true },
   images :{type : [String] , required : true},
   coverImage :{type : String , required : true},
 });

@@ -39,7 +39,11 @@ exports.updateTeamMemberValidator = [
         validatorMiddleWare
 ];
     
-
+exports.getTeamMemberValidator = [
+    check('id').isMongoId().withMessage('Invalid ID formate'),
+    validatorMiddleWare,
+];
+  
 exports.deleteTeamMemberValidator = [
     check('id').isMongoId().withMessage('Invalid ID formate'),
     validatorMiddleWare,

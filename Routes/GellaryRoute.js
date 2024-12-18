@@ -1,15 +1,37 @@
 const express = require('express');
 
-const { createGellary  , uploadGellaryImage , resizeGellaryImages, updateGellary , deleteGellary} = require('../Controllers/GellaryController');
+const { createGellary ,
+         updateNonImages,
+         uploadGellaryImagesMiddleware,
+         handleFileUploads,
+         updateToAddNewImages,
+         deleteSingleImage ,
+         getOneGellary,
+        getAllGellary,
+        deleteGallery
+                     } = require('../Controllers/GellaryController');
 
-const {createGellaryValidator , updateGellaryValidator , deleteGellaryValidator} = require('../utils/Validators/GellaryValidator');
+const {createGellaryValidator ,
+     updateGellaryValidator ,
+      deleteGellaryValidator,
+     getGellaryValidator} = require('../utils/Validators/GellaryValidator');
 
 const {protect} = require('../Controllers/AdminAuthController');
 
 const router = express.Router();
 
-router.post('/createGellary', protect , uploadGellaryImage , resizeGellaryImages  , createGellaryValidator, createGellary);
-router.put('/updateGellary/:id', protect , uploadGellaryImage , resizeGellaryImages  , updateGellaryValidator, updateGellary);
-router.delete('/deleteGellary/:id', protect , deleteGellaryValidator, deleteGellary);
+router.get('/', getAllGellary);
+
+router.get('/:id',getGellaryValidator , getOneGellary);
+
+router.post('/createGellary', protect , uploadGellaryImagesMiddleware, handleFileUploads, createGellaryValidator, createGellary );
+
+router.put('/updateNonImages/:id', protect , updateGellaryValidator, updateNonImages);
+
+router.put('/addNewImages/:id', protect , uploadGellaryImagesMiddleware, handleFileUploads, updateGellaryValidator, updateToAddNewImages );
+
+router.delete('/deleteSingleImage/:id', protect , deleteGellaryValidator, deleteSingleImage);
+
+router.delete('/deleteGallery/:id', protect , deleteGellaryValidator, deleteGallery);
 
 module.exports = router;

@@ -32,28 +32,37 @@ exports.login = asynchandler(async(req , res , next)=>{
 });
 
 
-exports.protect = asynchandler(async(req , res , next)=>{
-    const token = req.headers['authorization']?.split(' ')[1];
+exports.protect = asynchandler(async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
 
-    if (!token) {
-        return next(new ApiError('You are not login , please login to get access this route',401));
+  if (!token) {
+    return next(new ApiError('Not authenticated. Please log in to access this route.', 401));
+  }
+
+  let decoded;
+  try {
+    decoded = JWT.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return next(new ApiError('Invalid or expired token.', 401));
+  }
+
+  const admin = await AdminDB.findById(decoded.adminId);
+  if (!admin) {
+    return next(new ApiError('The user belonging to this token no longer exists.', 401));
+  }
+
+  if (admin.passwordChangedAt) {
+    const passwordChangedTimestamp = parseInt(admin.passwordChangedAt.getTime() / 1000, 10);
+    if (decoded.iat < passwordChangedTimestamp) {
+      return next(new ApiError('User recently changed password. Please log in again.', 401));
     }
+  }
 
-    const decoded = JWT.verify(token , process.env.JWT_SECRET);
-
-    const Admin = await AdminDB.findById(decoded.adminId);
-
-    if(!Admin){
-        return next(new ApiError('Admin that belong to this token is not found',401));
-    }
-
-    if(Admin.passwordChangedAt){
-        const passChangedTimesStamp = parseInt(Admin.passwordChangedAt.getTime()/1000,10);
-        if(passChangedTimesStamp > decoded.iat){
-          return next(new ApiError('Admin resently change a password , please login again',401));
-        }
-      }
-      next();
+  req.admin = admin;
+  next();
 });
 
 
@@ -147,9 +156,7 @@ exports.resetPassword = asynchandler(async(req, res, next)=>{
     await Admin.save();
     
     // 3- if everything is ok , generate token
-    const token = JWT.sign({adminId: Admin._id},process.env.JWT_SECRET,{
-      expiresIn: process.env.JWT_EXPIRE_TIME,
-      });
+    const token = CreateToken(Admin._id);
     
       res.status(200).json({token});
 });
