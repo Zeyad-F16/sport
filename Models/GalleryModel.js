@@ -1,9 +1,10 @@
 const mongoose  = require('mongoose');
 
-const GellarySchema = mongoose.Schema({
+const GallerySchema = mongoose.Schema({
   title : {type:  String , required : true },
-  images :{type : [String] , required : true},
+  description: String,
+  images : [String] ,
   coverImage :{type : String , required : true},
 });
 
-module.exports = mongoose.model('Gellary',GellarySchema);
+module.exports = mongoose.model('Gallery',GallerySchema);

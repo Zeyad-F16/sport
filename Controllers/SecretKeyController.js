@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const ApiError = require('../utils/ApiError');
 
+// Validate the secret key
 const ValidateSecret = (req , res , next)=>{
     const {secretKey} = req.body;
     

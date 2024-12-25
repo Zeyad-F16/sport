@@ -1,29 +1,30 @@
 const { check } = require('express-validator');
 const validatorMiddleWare = require('../../Middlewares/ValidatorMiddleware');
 
-exports.createGellaryValidator = [
+exports.createGalleryValidator = [
   check('title').notEmpty().withMessage('Title is required'),
-  check('coverImage').custom((value, { req }) => {
-    if (!req.files || !req.files.coverImage) {
-      throw new Error('Cover image is required');
-    }
-    return true;
-  }),
-  check('images').custom((value, { req }) => {
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
-      throw new Error('At least one gallery image is required');
-    }
-    return true;
-  }),
+  check('description')
+    .optional()
+    .notEmpty()
+    .withMessage('Description cannot be empty if provided'),
+  check('coverImage').notEmpty().withMessage('Cover image is required'),
+  check('images')
+    .optional()
+    .isArray()
+    .withMessage('At least one gallery image is required'),
+  validatorMiddleWare,
 ];
 
-
-exports.updateGellaryValidator = [
+exports.updateGalleryValidator = [
   check('id').isMongoId().withMessage('Invalid ID formate'),
   check('title')
   .optional()
   .notEmpty()
   .withMessage('Title cannot be empty if provided'),
+  check('description')
+        .optional()
+        .notEmpty()
+        .withMessage('Description cannot be empty if provided'),
   check('coverImage')
     .optional()
     .notEmpty()
@@ -42,13 +43,13 @@ exports.updateGellaryValidator = [
   validatorMiddleWare,
 ];
 
-exports.getGellaryValidator = [
+exports.getGalleryValidator = [
   check('id').isMongoId().withMessage('Invalid ID formate'),
   validatorMiddleWare,
 ];
 
 
-exports.deleteGellaryValidator = [
+exports.deleteGalleryValidator = [
   check('id').isMongoId().withMessage('Invalid ID formate'),
   validatorMiddleWare,
 ];

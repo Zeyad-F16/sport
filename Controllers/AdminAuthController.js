@@ -8,6 +8,9 @@ const JWT = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
 const {sanitizeAdminData} = require('../utils/sanitizeData');
 
+// @desc    Admin Signup 
+// @route   POST /assiutmotorsport/api/admin/signup
+// @access  Private/Access only for those who entered the secret key correctly
 exports.Signup = asynchandler(async(req , res)=>{   
     const Admin = await AdminDB.create({
         name : req.body.name,
@@ -19,7 +22,9 @@ exports.Signup = asynchandler(async(req , res)=>{
    res.status(201).json({data: sanitizeAdminData(Admin) , token});
 });
 
-
+// @desc    Admin login 
+// @route   POST /assiutmotorsport/api/admin/login
+// @access  Private/Access only for Admins
 exports.login = asynchandler(async(req , res , next)=>{
     const Admin = await AdminDB.findOne({email : req.body.email});
     
@@ -32,7 +37,9 @@ exports.login = asynchandler(async(req , res , next)=>{
 });
 
 
+// @desc make sure the user is logged in 
 exports.protect = asynchandler(async (req, res, next) => {
+  // check if token exists 
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
@@ -42,26 +49,24 @@ exports.protect = asynchandler(async (req, res, next) => {
     return next(new ApiError('Not authenticated. Please log in to access this route.', 401));
   }
 
-  let decoded;
-  try {
-    decoded = JWT.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
-    return next(new ApiError('Invalid or expired token.', 401));
-  }
-
-  const admin = await AdminDB.findById(decoded.adminId);
-  if (!admin) {
+ // verify token that check token is not expired and no changes happened
+ const decoded = JWT.verify(token, process.env.JWT_SECRET);
+  
+ // check if Admin exists
+  const Admin = await AdminDB.findById(decoded.adminId);
+  if (!Admin) {
     return next(new ApiError('The user belonging to this token no longer exists.', 401));
   }
 
-  if (admin.passwordChangedAt) {
-    const passwordChangedTimestamp = parseInt(admin.passwordChangedAt.getTime() / 1000, 10);
+  // check if Admin change his password after token created
+  if (Admin.passwordChangedAt) {
+    const passwordChangedTimestamp = parseInt(Admin.passwordChangedAt.getTime() / 1000, 10);
     if (decoded.iat < passwordChangedTimestamp) {
       return next(new ApiError('User recently changed password. Please log in again.', 401));
     }
   }
 
-  req.admin = admin;
+  req.admin = Admin;
   next();
 });
 
@@ -87,12 +92,12 @@ exports.forgetPassword = asynchandler(async(req, res, next)=>{
   await Admin.save();
   
   // 3- send the reset code via email
-  const message =`Hi ${Admin.name},\n  We got a request to reset your password \n ${resetCode} \n Enter this code to reset \n Thanks`;
+  const message =`Hi ${Admin.name},\nWe got a request to reset your password \n ${resetCode} \nEnter this code to reset \nThanks`;
   
    try{
     await sendEmail({
       email:Admin.email,
-      subject: 'Your password reset code ( valid for 10 minutes )',
+      subject: 'Your password reset code valid for 10 minutes ',
       message,
       });
    }
@@ -137,25 +142,26 @@ exports.forgetPassword = asynchandler(async(req, res, next)=>{
 
 
 exports.resetPassword = asynchandler(async(req, res, next)=>{
-    // 1- Get Admin based on email
+    //  Get Admin based on email
     const Admin = await AdminDB.findOne({ email: req.body.email});
     if (!Admin) {
       return next(new ApiError(`There is no Admin for this email ${req.body.email}`,404));
     }
     
-    //2- check if reset code verified
-    if(Admin.passwordResetVerified === false ){
+    // check if reset code verified
+    if(!Admin.passwordResetVerified){
     return next(new ApiError('Reset code not verified',400));
     }
     
     Admin.password = req.body.newPassword ;
+    Admin.passwordChangedAt = Date.now();
     Admin.passwordResetCode = undefined;
     Admin.passwordResetExpires = undefined;
     Admin.passwordResetVerified = undefined;
     
     await Admin.save();
     
-    // 3- if everything is ok , generate token
+    // if everything is ok , generate token
     const token = CreateToken(Admin._id);
     
       res.status(200).json({token});

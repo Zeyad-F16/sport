@@ -1,8 +1,15 @@
 const express = require('express');
 
 const secertKey = require('../Controllers/SecretKeyController');
-const {Signup , login , forgetPassword , verifyPasswordResetCode , resetPassword} = require('../Controllers/AdminAuthController');
+
+const {          Signup ,
+                  login ,
+         forgetPassword , 
+verifyPasswordResetCode ,
+           resetPassword} = require('../Controllers/AdminAuthController');
+
 const validateSecretKeyToken = require('../Middlewares/validateSecretKeyToken');
+
 const {signupValidator , loginValidator } = require('../utils/Validators/authValidator');
 
 const router = express.Router();

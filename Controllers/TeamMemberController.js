@@ -5,15 +5,28 @@ const asyncHandler = require('express-async-handler');
 const cloudinary = require('cloudinary').v2;
 const extractPublicId = require('../utils/getImageId');
 
+// Get all team members
+// access : Public
 exports.getAllTeamMembers  = factory.getAll(TeamMemberDB);
 
+// Get one team member
+// access : Public
 exports.getOneTeamMember  = factory.getOne(TeamMemberDB);
 
+// Create a team member
 exports.createTeamMember  = factory.createOne(TeamMemberDB);
 
-exports.updateNonImages  = factory.updateNonImages(TeamMemberDB);
+// Update a team member
+exports.updateTextData  = factory.updateTextData(TeamMemberDB);
 
-exports.updateSingleImage  = factory.updateSingleImage(TeamMemberDB , "profileImage");
+// Update profile image
+exports.updateProfileImage  = factory.updateSingleImage(TeamMemberDB , "profileImage");
+
+// Middleware for uploading profile image
+exports.uploadProfileImage = upload.single("profileImage");
+
+// Handle single file upload
+exports.handleSingleFileUpload = factory.handleSingleFileUpload("profileImage");
 
 // delete team member
 exports.deleteTeamMember = asyncHandler(async (req, res, next) => {
@@ -34,14 +47,3 @@ exports.deleteTeamMember = asyncHandler(async (req, res, next) => {
   await document.deleteOne();
   res.status(204).send();
 });
-
-// Middleware for uploading profile image
-exports.uploadMiddleware = upload.single('profileImage');
-
-exports.handleSingleFileUpload = (req, res , next) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-  req.body.profileImage = req.file.path;
-  next();
-};
